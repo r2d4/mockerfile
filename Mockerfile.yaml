@@ -1,18 +1,7 @@
 apiVersion: v1alpha1
 images:
-- name: build-skaffold
-  from: golang:1.10
-  workdir: /go/src/github.com/GoogleContainerTools/skaffold
-  input:
-    mount:
-      ".": /go/src/github.com/GoogleContainerTools/skaffold
-  steps:
-  - make
-  output:
-  - out/skaffold:/usr/bin/skaffold
 - name: run-skaffold
   from: ubuntu:16.04
-  # parent: build-skaffold
   package:
     repo: 
     - deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
@@ -31,11 +20,20 @@ images:
     - python-setuptools
     - lsb-release
     - software-properties-common
-    - apt-transport-https
     - docker-ce=17.12.0~ce-0~ubuntu
   external:
   - src: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl
     dst: /usr/local/bin/kubectl
+
   - src: https://github.com/kubernetes-sigs/kustomize/releases/download/v1.0.8/kustomize_1.0.8_linux_amd64
     dst: /usr/local/bin/kustomize
     sha256: b5066f7250beb023a3eb7511c5699be4dbff57637ac4a78ce63bde6e66c26ac4
+
+  - src: https://storage.googleapis.com/kubernetes-helm/helm-v2.10.0-linux-amd64.tar.gz
+    dst: /tmp/helm
+    install:
+    - install /tmp/helm/linux-amd64/helm /usr/local/bin/helm
+    
+  - src: https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-217.0.0-linux-x86_64.tar.gz
+    dst: /tmp
+

@@ -58,4 +58,6 @@ type ExternalFile struct {
 	Source      string `yaml:"src"`
 	Destination string `yaml:"dst"`
 	Sha256      string `yaml:"sha256"`
+
+	Install []string `yaml:"install"`
 }

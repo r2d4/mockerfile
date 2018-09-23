@@ -8,6 +8,20 @@ import (
 	"github.com/r2d4/mockerfile/pkg/mocker/config"
 )
 
+func Mockerfile2LLB(c *config.Config) (llb.State, *Image) {
+	current := c.Images[0]
+	s := llb.Image(current.From)
+	if current.Package != nil {
+		s = packages(s, current.Package)
+	}
+	for _, e := range current.ExternalFiles {
+		downloaded := external(e)
+		s = copy(downloaded, e.Destination, s, e.Destination)
+	}
+	imageCfg := NewImageConfig(c)
+	return s, imageCfg
+}
+
 func curl() llb.State {
 	return llb.Image("docker.io/library/alpine:3.6").
 		Run(llb.Shlex("apk add --no-cache curl")).Root()
@@ -28,20 +42,6 @@ func packages(base llb.State, p *config.Package) llb.State {
 	return base
 }
 
-func Mockerfile2LLB(c *config.Config) (llb.State, *Image) {
-	current := c.Images[1]
-	s := llb.Image(current.From)
-	if current.Package != nil {
-		s = packages(s, current.Package)
-	}
-	for _, e := range current.ExternalFiles {
-		downloaded := external(e)
-		s = copy(downloaded, e.Destination, s, e.Destination)
-	}
-	imageCfg := NewImageConfig(c)
-	return s, imageCfg
-}
-
 func aptAddKey(dst llb.State, url string) llb.State {
 	downloadSt := curl().
 		Run(llb.Shlexf("curl -Lo /key.gpg %s", url)).Root()
@@ -52,11 +52,29 @@ func aptAddKey(dst llb.State, url string) llb.State {
 }
 
 func external(e *config.ExternalFile) llb.State {
+	downloadDst := e.Destination
+	isTarGz := strings.HasSuffix(e.Source, ".tar.gz")
+	isExecutable := true
+	if isTarGz {
+		downloadDst = "tmp.tar.gz"
+		isExecutable = false
+	}
+	curlCmd := fmt.Sprintf("curl -Lo %s %s", downloadDst, e.Source)
+	if isExecutable {
+		curlCmd = fmt.Sprintf("%s && chmod +x %s", curlCmd, downloadDst)
+	}
 	s := curl().
-		Run(shf("curl -Lo %s %s && chmod +x %s", e.Destination, e.Source, e.Destination)).Root()
+		Run(sh(curlCmd)).Root()
 	if e.Sha256 != "" {
 		//TODO r2d4: get piping and echo to work with /bin/sh -c
-		s = s.Run(shf("echo \"%s  %s\" | sha256sum -c -", e.Sha256, e.Destination)).Root()
+		s = s.Run(shf("echo \"%s  %s\" | sha256sum -c -", e.Sha256, downloadDst)).Root()
+	}
+	if isTarGz {
+		s = s.Run(shf("mkdir -p %[2]s && tar -zxvf %[1]s -C %[2]s && rm %[1]s", downloadDst, e.Destination)).Root()
+	}
+	if len(e.Install) > 0 {
+		installCmds := strings.Join(e.Install, " && ")
+		s = s.Run(shf(installCmds)).Root()
 	}
 	return s
 }
