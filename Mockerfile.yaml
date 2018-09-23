@@ -16,12 +16,12 @@ images:
   package:
     repo: 
     - deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
-    # - deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial edge
+    - deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial edge
     gpg: 
     - https://bazel.build/bazel-release.pub.gpg
-    # - https://download.docker.com/linux/ubuntu/gpg
+    - https://download.docker.com/linux/ubuntu/gpg
     install:
-    # - bazel
+    - bazel
     - python-dev
     - ca-certificates
     - curl
@@ -32,7 +32,7 @@ images:
     - lsb-release
     - software-properties-common
     - apt-transport-https
-    #- docker-ce=17.12.0~ce-0~ubuntu
+    - docker-ce=17.12.0~ce-0~ubuntu
   external:
   - src: https://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/linux/amd64/kubectl
     dst: /usr/local/bin/kubectl

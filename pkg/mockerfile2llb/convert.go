@@ -14,16 +14,16 @@ func curl() llb.State {
 }
 
 func packages(base llb.State, p *config.Package) llb.State {
+	base = base.Run(shf("apt-get update && apt-get install apt-transport-https -y")).Root()
 	for _, repo := range p.Repo {
-		base = base.Run(llb.Shlexf("echo %s >> /etc/apt/sources.list", repo)).Root()
+		base = base.Run(shf("echo \"%s\" >> /etc/apt/sources.list", repo)).Root()
 	}
 	for _, key := range p.Gpg {
 		base = aptAddKey(base, key)
 	}
-	base = base.Run(llb.Shlex("apt-get update")).Root()
 	if len(p.Install) > 0 {
 		packages := strings.Join(p.Install, " ")
-		base = base.Run(llb.Shlex(fmt.Sprintf("apt-get install --no-install-recommends --no-install-suggests -y %s", packages))).Root()
+		base = base.Run(shf("apt-get update && apt-get install --no-install-recommends --no-install-suggests -y %s", packages)).Root()
 	}
 	return base
 }
@@ -56,18 +56,17 @@ func external(e *config.ExternalFile) llb.State {
 		Run(shf("curl -Lo %s %s && chmod +x %s", e.Destination, e.Source, e.Destination)).Root()
 	if e.Sha256 != "" {
 		//TODO r2d4: get piping and echo to work with /bin/sh -c
-		s = s.Run(llb.Args([]string{
-			"/bin/sh", "-c", fmt.Sprintf("echo \"%s  %s\" | sha256sum -c -", e.Sha256, e.Destination)})).Root()
+		s = s.Run(shf("echo \"%s  %s\" | sha256sum -c -", e.Sha256, e.Destination)).Root()
 	}
 	return s
 }
 
 func shf(cmd string, v ...interface{}) llb.RunOption {
-	return llb.Shlexf(`/bin/sh -c '%s'`, fmt.Sprintf(cmd, v...))
+	return llb.Args([]string{"/bin/sh", "-c", fmt.Sprintf(cmd, v...)})
 }
 
 func sh(cmd string) llb.RunOption {
-	return llb.Shlexf("/bin/sh -c \"%s\"", cmd)
+	return llb.Args([]string{"/bin/sh", "-c", cmd})
 }
 
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
