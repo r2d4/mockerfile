@@ -1,9 +1,10 @@
 BUILD_DIR := out
 GATEWAY_IMAGE := r2d4/mocker
+GO_FILES := $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 IMAGE := r2d4/mockerdoby
 
-out/mocker: $(BUILD_DIR)
+out/mocker: $(BUILD_DIR) $(GO_FILES)
 	CGO_ENABLED=0 go build -o $(BUILD_DIR)/mocker --ldflags '-extldflags "-static"' github.com/r2d4/mockerfile/cmd/mocker
 
 $(BUILD_DIR):
@@ -21,6 +22,6 @@ image:
 shell:
 	docker run -it $(IMAGE) bash
 
-.PHONY: run
-run:
-	
+.PHONY: graph
+graph: out/mocker
+	out/mocker -graph | buildctl debug dump-llb --dot > out/Mockerfile.dot
