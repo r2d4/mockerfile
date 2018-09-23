@@ -20,3 +20,7 @@ image:
 .PHONY: shell
 shell:
 	docker run -it $(IMAGE) bash
+
+.PHONY: run
+run:
+	

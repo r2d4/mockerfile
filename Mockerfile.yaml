@@ -38,4 +38,4 @@ images:
     dst: /usr/local/bin/kubectl
   - src: https://github.com/kubernetes-sigs/kustomize/releases/download/v1.0.8/kustomize_1.0.8_linux_amd64
     dst: /usr/local/bin/kustomize
-    # sha256: b5066f7250beb023a3eb7511c5699be4dbff57637ac4a78ce63bde6e66c26ac4
+    sha256: b5066f7250beb023a3eb7511c5699be4dbff57637ac4a78ce63bde6e66c26ac4

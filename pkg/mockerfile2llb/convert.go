@@ -55,17 +55,19 @@ func external(e *config.ExternalFile) llb.State {
 	s := curl().
 		Run(shf("curl -Lo %s %s && chmod +x %s", e.Destination, e.Source, e.Destination)).Root()
 	if e.Sha256 != "" {
-		s = s.Run(shf("echo %s  %s | sha256sum -c -", e.Sha256, e.Destination)).Root()
+		//TODO r2d4: get piping and echo to work with /bin/sh -c
+		s = s.Run(llb.Args([]string{
+			"/bin/sh", "-c", fmt.Sprintf("echo \"%s  %s\" | sha256sum -c -", e.Sha256, e.Destination)})).Root()
 	}
 	return s
 }
 
 func shf(cmd string, v ...interface{}) llb.RunOption {
-	return llb.Shlexf(`/bin/sh -c "%s"`, fmt.Sprintf(cmd, v...))
+	return llb.Shlexf(`/bin/sh -c '%s'`, fmt.Sprintf(cmd, v...))
 }
 
 func sh(cmd string) llb.RunOption {
-	return llb.Shlexf(`/bin/sh -c "%s"`, cmd)
+	return llb.Shlexf("/bin/sh -c \"%s\"", cmd)
 }
 
 func copy(src llb.State, srcPath string, dest llb.State, destPath string) llb.State {
