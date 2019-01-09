@@ -1,3 +1,4 @@
+#syntax=r2d4/mocker
 apiVersion: v1alpha1
 images:
 - name: run-skaffold
@@ -33,7 +34,7 @@ images:
     dst: /tmp/helm
     install:
     - install /tmp/helm/linux-amd64/helm /usr/local/bin/helm
-    
+
   - src: https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-217.0.0-linux-x86_64.tar.gz
     dst: /tmp
 
